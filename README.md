@@ -22,3 +22,13 @@ After the loop, the function should just return(NULL).
 Stop and try your program now. It is multi-threaded, but not thread-safe. It should not work properly.
 
 Make NodeBuffer thread safe by giving it the necessary mutex(es) and condition(s). Where is/are the critical sections? Be sure to destroy your variables in ~NodeBuffer()!
+
+
+Safe C memory programming (50 Points)
+The program dirPath.c parses a given file path into a linked list of heap-allocated DirEntryName instances. A single heap-allocated PathName instance owns this list.
+
+Please write:
+
+getPathText()
+parseRestOfPath()
+destroy()
