@@ -18,7 +18,7 @@
 #include	<iostream>
 #include	<sstream>
 #include	<pthread.h>
-
+#include	<unistd.h>
 
 //  PURPOSE:  To tell the maximum value that a tree can have.
 const int	MAX_VALUE		= 64;

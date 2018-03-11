@@ -20,6 +20,9 @@ class   NodeBuffer
   int   inIndex_;
   int   outIndex_;
   int   numItems_;
+  pthread_mutex_t	lock_;
+  pthread_cond_t	notEmpty_;
+  pthread_cond_t	notFull_;
 
 public :
 
@@ -31,10 +34,16 @@ public :
     }
 
     inIndex_ = outIndex_ = numItems_ = 0;
+    pthread_mutex_init(&lock_,NULL);
+    pthread_cond_init(&notEmpty_,NULL);
+    pthread_cond_init(&notFull_,NULL);
   }
 
   ~NodeBuffer       ()
   {
+    pthread_mutex_destroy(&lock_);
+    pthread_cond_destroy(&notEmpty_);
+    pthread_cond_destroy(&notFull_);
   }
 
   int   getNumItems  () const
@@ -42,8 +51,10 @@ public :
 
   void  putIn (Node* nodePtr)
   {
+    pthread_mutex_lock(&lock_);
     while  (getNumItems() >= SIZE)
     {
+	pthread_cond_wait(&notFull_,&lock_);
     }
 
     array_[inIndex_] = nodePtr;
@@ -52,12 +63,16 @@ public :
     numItems_++;
     if  (inIndex_ >= SIZE)
       inIndex_ = 0;
+    pthread_mutex_unlock(&lock_);
+    pthread_cond_signal(&notEmpty_);
   }
 
   Node*   pullOut ()
   {
+    pthread_mutex_lock(&lock_);
     while  (getNumItems() <= 0)
     {
+	pthread_cond_wait(&notEmpty_,&lock_);
     }
 
     Node* toReturn        = array_[outIndex_];
@@ -68,6 +83,8 @@ public :
     if  (outIndex_ >= SIZE)
       outIndex_ = 0;
 
+    pthread_cond_signal(&notFull_);
+    pthread_mutex_unlock(&lock_);
     return(toReturn);
   }
 };

@@ -19,12 +19,17 @@
 
 #include	"mathSolverHeader.h"
 
-
 void*		evaluate	(void*		vPtr
 				)
 {
   NodeBuffer*	nodeBufferPtr	= (NodeBuffer*)vPtr;
-
+  for (int i = 0; i < NUM_PROBLEMS/2; i++)
+  	{
+  		Node* j = nodeBufferPtr->pullOut();
+		printf("%d %s = %f\n",i, j->toString().c_str(),j->eval());
+		fflush(stdout);
+  	}
+  return(NULL);
   //  YOUR CODE HERE
 }
 
@@ -48,6 +53,17 @@ int		main		(int		argc,
   srand( (argc < 2) ? getpid() : atoi(argv[1]) );
 
   //  YOUR CODE HERE
+  pthread_create(&consumer0,NULL,evaluate,&nodeBuffer);
+  pthread_create(&consumer1,NULL,evaluate,&nodeBuffer);
+
+  for (int i = 0; i < NUM_PROBLEMS; i++)
+  {
+  	nodeBuffer.putIn(makeNode());
+  }
+
+  pthread_join(consumer0,NULL);
+  pthread_join(consumer1,NULL);
+
 
   return(toReturn);
 }
