@@ -57,6 +57,15 @@ const char*	getPathText	(int		argc,
 				)
 {
   //  YOUR CODE HERE
+  if (argc >= 2) return argv[1];
+  else
+  {
+	printf("Please enter a directory path: ");
+	fgets(textSpace, textSpaceLen, stdin);
+	char* cPtr = strchr(textSpace, '\n');
+	if (cPtr != NULL) *cPtr = '\0';
+	return(textSpace);
+  }
 }
 
 
@@ -93,33 +102,56 @@ struct DirEntryName*
   //  II.  Return value:
   //  II.A.  Handle when at end of 'linePtr':
   //  YOUR CODE HERE
+  if (*linePtr == '\0') return(NULL);
 
   //  II.B.  Handle when 'linePtr' points to '/',
   //	     and thus a missing directory name:
   //  YOUR CODE HERE
+  if (*linePtr == '/')
+  {
+	printf("Missing directory name. Exit with failure...\n");
+	exit(EXIT_FAILURE);
+  }
 
   //  II.C.  Get entry name:
-  char*	entryNamePtr	= linePtr;
+  const char*	entryNamePtr	= linePtr;
 
   //  II.C.1.  Leave 'entryNamePtr' pointing to the beginning of the entry name,
   //	       and advance 'linePtr' until the characters are no longer legal:
   //  YOUR CODE HERE
+  int i;
+  for (i = 0; isLegalDirEntryChar(linePtr[i]); i++);
+  linePtr = linePtr + i;
 
   //  II.C.2.  If you have stopped because of anything other than '/' or '\0'
   //	       then the user gave you an illegal char.  Give error message here:
   //  YOUR CODE HERE
+  if (*linePtr != '\0' && *linePtr != '/')
+  {
+	printf("Illegal character %c in path. Exit with failure...\n",*linePtr);
+	exit(EXIT_FAILURE);
+  }
 
   //  II.C.3.  Allocate a new 'struct DirEntryName*' pointer here.
   //	       Allocate memory for its name and copy entry name into that mem:
   //  YOUR CODE HERE
+  int nameLength = linePtr - entryNamePtr;
+  struct DirEntryName	*dir = (struct DirEntryName *)malloc(sizeof(struct DirEntryName));
+  char			*name = (char *)malloc(sizeof(char) * (nameLength + 1));
+  memcpy(name, entryNamePtr, nameLength);
+  name[nameLength] = '\0';
+  dir->name_ = name;
 
   //  II.C.4.  If 'linePtr' encountered '/' it should get the value for
   //	       'nextPtr_' by recursion.  If it points to '\0' it should set
   //	       'nextPtr_' to 'NULL'.
   //  YOUR CODE HERE
+  if (*linePtr == '/') dir->nextPtr_ = parseRestOfPath(linePtr + 1);
+  if (*linePtr == '\0') dir-> nextPtr_ = NULL;
 
   //  III.  Finished:
   //  RETURN YOUR 'struct DirEntryName*' POINTER HERE
+  return dir;
 }
 
 
@@ -234,13 +266,46 @@ void		print		(struct PathName*
 //  PURPOSE:  To 'free()' the memory of 'pathNamePtr': all DirEntryName
 //	'name_' and 'nextPtr_' member vars, and the memory of 'pathNamePtr'
 //	itself.  No return value.
+void		destroyNext	(struct DirEntryName 
+						*dir
+				)
+{
+  if (dir == NULL)
+  {
+	return;
+  }
+  else if (dir->nextPtr_ != NULL)
+  {
+	destroyNext(dir->nextPtr_);
+  }
+  else
+  {
+	free(dir->name_);
+	free(dir);
+  }
+}
+
+
 void		destroy		(struct PathName*
 						pathNamePtr
 				)
 {
   //  YOUR CODE HERE
+  struct DirEntryName *name = pathNamePtr->dirEntryNamePtr_;
+  destroyNext(name);
+  free(pathNamePtr);
 }
 
 
 //  PURPOSE:  To do the high level work of this program.  'argc' tells the
 //	number of command line arguments.  'argv[]' points to the arguments.
+//	Returns 'EXIT_SUCCESS' to OS on success or 'EXIT_FAILURE' otherwise.
+int		main		(int		argc, char*		argv[]) {
+    char	textSpace[LINE_LEN];
+    const char*		linePtr	= getPathText(argc,argv,textSpace,LINE_LEN);
+    struct PathName*	pathPtr	= getPath(linePtr);
+
+    print(pathPtr);
+    destroy(pathPtr);
+    return(EXIT_SUCCESS);
+}
